@@ -1,0 +1,7 @@
+[package]
+name = "iron_docker"
+version = "0.1.0"
+authors = ["superlogical"]
+
+[dependencies]
+iron="*"
