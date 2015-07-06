@@ -25,7 +25,7 @@ pub struct HitCounter;
 impl Key for HitCounter { type Value = usize; }
 
 pub struct AppDb;
-impl ::iron::typemap::Key for AppDb { type Value = PostgresPool; }
+impl Key for AppDb { type Value = PostgresPool; }
 
 
 fn index(_: &mut Request) -> IronResult<Response> {
@@ -68,30 +68,17 @@ pub fn setup(cn_str: &str, pool_size: u32) -> PostgresPool {
 
 fn main() {
     println!("connecting to postgres");
+    let pool = setup("postgres://dbuser:dbpass@localhost:5432/test", 6);
+    let conn = pool.get().unwrap();
 
-    let pool:PostgresPool = setup("postgres://dbuser:dbpass@localhost:5432/test", 6);
-    let conn:PostgresPooledConnection = pool.get().unwrap();
-
-    conn.execute("DROP TABLE IF EXISTS messages;", &[]).unwrap();
+    conn.execute("DROP TABLE IF EXISTS messages;", &[]).unwrap();    
     conn.execute("CREATE TABLE IF NOT EXISTS messages (id INT PRIMARY KEY);", &[]).unwrap();
+    
     conn.execute("INSERT INTO messages VALUES (1);", &[]).unwrap();
     conn.execute("INSERT INTO messages VALUES (2);", &[]).unwrap();
     conn.execute("INSERT INTO messages VALUES (3);", &[]).unwrap();
-
-    let stmt = conn.prepare("SELECT id FROM messages;").unwrap();
-    for row in stmt.query(&[]).unwrap() {
-        let id: i32 = row.get(0);
-        println!("id: {}", id);
-    }
-
-    let ip = Ipv4Addr::new(0, 0, 0, 0);
-    let port = 8080;
-    let address = SocketAddrV4::new(ip, port);
     
-    println!("listening on http://{}", address);
-
     let mut router = Router::new();
-
     router.get("/", index);
     router.get("/posts/:post_id", posts);
     router.get("/hits", hits);
@@ -101,5 +88,7 @@ fn main() {
     middleware.link(Write::<HitCounter>::both(0));
     middleware.link(Read::<AppDb>::both(pool));    
 
-    Iron::new(middleware).http(address).unwrap();
+    let host = SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8080);
+    println!("listening on http://{}", host);
+    Iron::new(middleware).http(host).unwrap();
 }
