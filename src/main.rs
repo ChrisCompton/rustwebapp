@@ -76,10 +76,8 @@ fn main() {
     //let manager:PostgresConnectionManager = PostgresConnectionManager::new("postgres://dbuser:dbpass@172.17.0.18:5432/test", SslMode::None).unwrap();
     //let pool = Arc::new(r2d2::Pool::new(config, manager).unwrap());
 
-    let pgPool = setup("postgres://dbuser:dbpass@172.17.0.18:5432/test", 6);
-    let pool = Arc::new(pgPool);
-
-    let conn = pool.get().unwrap();
+    let pool:PostgresPool = setup("postgres://dbuser:dbpass@172.17.0.18:5432/test", 6);
+    let conn:PostgresPooledConnection = pool.get().unwrap();
 
     try!(conn.execute("DROP TABLE IF EXISTS messages;", &[]));
     try!(conn.execute("CREATE TABLE IF NOT EXISTS messages (id INT PRIMARY KEY);", &[]));
