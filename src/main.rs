@@ -17,15 +17,6 @@ use persistent::{Write,Read};
 use r2d2::{Pool, PooledConnection};
 use r2d2_postgres::{PostgresConnectionManager};
 
-macro_rules! try {
-    ($e:expr) => (
-        match $e {
-            Ok(ok) => ok,
-            Err(err) => panic!("{:#?}", err)
-        }
-    )
-}
-
 pub type PostgresPool = Pool<PostgresConnectionManager>;
 pub type PostgresPooledConnection = PooledConnection<PostgresConnectionManager>;
 
@@ -61,8 +52,8 @@ fn hits(req: &mut Request) -> IronResult<Response> {
 fn database(req: &mut Request) -> IronResult<Response> {
     let pool = req.get::<Read<AppDb>>().unwrap();
     let conn = pool.get().unwrap();
-    let stmt = try!(conn.prepare("SELECT id FROM messages;"));
-    for row in try!(stmt.query(&[])) {
+    let stmt = conn.prepare("SELECT id FROM messages;").unwrap();
+    for row in stmt.query(&[]).unwrap() {
         let id: i32 = row.get(0);
         println!("id: {}", id);
     }
@@ -81,15 +72,14 @@ fn main() {
     let pool:PostgresPool = setup("postgres://dbuser:dbpass@localhost:5432/test", 6);
     let conn:PostgresPooledConnection = pool.get().unwrap();
 
-    try!(conn.execute("DROP TABLE IF EXISTS messages;", &[]));
-    try!(conn.execute("CREATE TABLE IF NOT EXISTS messages (id INT PRIMARY KEY);", &[]));
+    conn.execute("DROP TABLE IF EXISTS messages;", &[]).unwrap();
+    conn.execute("CREATE TABLE IF NOT EXISTS messages (id INT PRIMARY KEY);", &[]).unwrap();
+    conn.execute("INSERT INTO messages VALUES (1);", &[]).unwrap();
+    conn.execute("INSERT INTO messages VALUES (2);", &[]).unwrap();
+    conn.execute("INSERT INTO messages VALUES (3);", &[]).unwrap();
 
-    try!(conn.execute("INSERT INTO messages VALUES (1);", &[]));
-    try!(conn.execute("INSERT INTO messages VALUES (2);", &[]));
-    try!(conn.execute("INSERT INTO messages VALUES (3);", &[]));
-
-    let stmt = try!(conn.prepare("SELECT id FROM messages;"));
-    for row in try!(stmt.query(&[])) {
+    let stmt = conn.prepare("SELECT id FROM messages;").unwrap();
+    for row in stmt.query(&[]).unwrap() {
         let id: i32 = row.get(0);
         println!("id: {}", id);
     }
