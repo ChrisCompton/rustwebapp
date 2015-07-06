@@ -2,15 +2,24 @@ extern crate iron;
 extern crate persistent;
 extern crate router;
 extern crate postgres;
+extern crate r2d2;
+extern crate r2d2_postgres;
 
 use std::env;
 use std::net::*;
+use std::sync::Arc;
+use std::thread;
+use std::default::Default;
+
 use iron::prelude::*;
 use iron::status;
 use iron::typemap::Key;
 use router::{Router};
 use persistent::Write;
+
 use postgres::{Connection, SslMode};
+use r2d2::{Pool, PooledConnection, Config};
+use r2d2_postgres::{PostgresConnectionManager};
 
 macro_rules! try {
     ($e:expr) => (
@@ -23,8 +32,10 @@ macro_rules! try {
 
 #[derive(Copy, Clone)]
 pub struct HitCounter;
-
 impl Key for HitCounter { type Value = usize; }
+
+pub type PostgresPool = Pool<PostgresConnectionManager>;
+pub type PostgresPooledConnection = PooledConnection<PostgresConnectionManager>;
 
 fn index(_: &mut Request) -> IronResult<Response> {
     let powered_by:String = match env::var("POWERED_BY") {
@@ -47,12 +58,32 @@ fn hits(req: &mut Request) -> IronResult<Response> {
     Ok(Response::with((status::Ok, format!("Hits: {}", *count))))
 }
 
+pub fn setup(cn_str: &str, pool_size: u32) -> PostgresPool {
+    let manager = ::r2d2_postgres::PostgresConnectionManager::new(cn_str, ::postgres::SslMode::None).unwrap();
+    
+    let config = ::r2d2::Config::builder()
+        .pool_size(pool_size)
+        .build();    
+
+    ::r2d2::Pool::new(config, manager).unwrap()
+}
+
 fn main() {
+
     println!("connecting to postgres");
-    let conn = try!(Connection::connect("postgres://dbuser:dbpass@172.17.0.18:5432/test", &SslMode::None));
+
+    //let config = r2d2::Config::default();
+    //let manager:PostgresConnectionManager = PostgresConnectionManager::new("postgres://dbuser:dbpass@172.17.0.18:5432/test", SslMode::None).unwrap();
+    //let pool = Arc::new(r2d2::Pool::new(config, manager).unwrap());
+
+    let pgPool = setup("postgres://dbuser:dbpass@172.17.0.18:5432/test", 6);
+    let pool = Arc::new(pgPool);
+
+    let conn = pool.get().unwrap();
 
     try!(conn.execute("DROP TABLE IF EXISTS messages;", &[]));
     try!(conn.execute("CREATE TABLE IF NOT EXISTS messages (id INT PRIMARY KEY);", &[]));
+
     try!(conn.execute("INSERT INTO messages VALUES (1);", &[]));
     try!(conn.execute("INSERT INTO messages VALUES (2);", &[]));
     try!(conn.execute("INSERT INTO messages VALUES (3);", &[]));
