@@ -12,6 +12,15 @@ use router::{Router};
 use persistent::Write;
 use postgres::{Connection, SslMode};
 
+macro_rules! try {
+    ($e:expr) => (
+        match $e {
+            Ok(ok) => ok,
+            Err(err) => panic!("{:#?}", err)
+        }
+    )
+}
+
 #[derive(Copy, Clone)]
 pub struct HitCounter;
 
@@ -40,20 +49,19 @@ fn hits(req: &mut Request) -> IronResult<Response> {
 
 fn main() {
     println!("connecting to postgres");
-    let conn = Connection::connect("postgres://dbuser:dbpass@172.17.0.18:5432/test", &SslMode::None).unwrap();
+    let conn = try!(Connection::connect("postgres://dbuser:dbpass@172.17.0.18:5432/test", &SslMode::None));
 
-    conn.execute("CREATE TABLE IF NOT EXISTS messages (id INT PRIMARY KEY);", &[]).unwrap();
+    try!(conn.execute("DROP TABLE IF EXISTS messages;", &[]));
+    try!(conn.execute("CREATE TABLE IF NOT EXISTS messages (id INT PRIMARY KEY);", &[]));
+    try!(conn.execute("INSERT INTO messages VALUES (1);", &[]));
+    try!(conn.execute("INSERT INTO messages VALUES (2);", &[]));
+    try!(conn.execute("INSERT INTO messages VALUES (3);", &[]));
 
-    conn.execute("INSERT INTO messages VALUES (1);", &[]).unwrap();
-    conn.execute("INSERT INTO messages VALUES (2);", &[]).unwrap();
-    conn.execute("INSERT INTO messages VALUES (3);", &[]).unwrap();
-
-    let stmt = conn.prepare("SELECT id FROM messages;").unwrap();
-    for row in stmt.query(&[]).unwrap() {
+    let stmt = try!(conn.prepare("SELECT id FROM messages;"));
+    for row in try!(stmt.query(&[])) {
         let id: i32 = row.get(0);
         println!("id: {}", id);
     }
-
 
     let ip = Ipv4Addr::new(0, 0, 0, 0);
     let port = 8080;
