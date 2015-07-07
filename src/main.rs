@@ -60,7 +60,7 @@ fn database(req: &mut Request) -> IronResult<Response> {
     Ok(Response::with((status::Ok, format!("Db: {}", "ok"))))
 }
 
-pub fn setup(cn_str: &str, pool_size: u32) -> PostgresPool {
+pub fn setup_connection_pool(cn_str: &str, pool_size: u32) -> PostgresPool {
     let manager = ::r2d2_postgres::PostgresConnectionManager::new(cn_str, ::postgres::SslMode::None).unwrap();
     let config = ::r2d2::Config::builder().pool_size(pool_size).build();
     ::r2d2::Pool::new(config, manager).unwrap()
@@ -68,7 +68,13 @@ pub fn setup(cn_str: &str, pool_size: u32) -> PostgresPool {
 
 fn main() {
     println!("connecting to postgres");
-    let pool = setup("postgres://dbuser:dbpass@localhost:5432/test", 6);
+
+    let conn_string:String = match env::var("DATABASE_URL") {
+        Ok(val) => val,
+        Err(_) => "postgres://dbuser:dbpass@localhost:5432/test".to_string()
+    };
+
+    let pool = setup_connection_pool(&conn_string, 6);
     let conn = pool.get().unwrap();
 
     conn.execute("DROP TABLE IF EXISTS messages;", &[]).unwrap();    
