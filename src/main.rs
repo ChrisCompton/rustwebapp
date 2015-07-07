@@ -100,3 +100,8 @@ fn main() {
     println!("listening on http://{}", host);
     Iron::new(middleware).http(host).unwrap();
 }
+
+#[test]
+pub fn test_it_works() {
+    assert!(true == true);
+}

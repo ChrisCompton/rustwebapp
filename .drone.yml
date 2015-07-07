@@ -1,0 +1,9 @@
+image: geal/archlinux-rust
+
+env:
+	- LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+
+script:
+	- rustc -v
+	- cargo build
+	- cargo test
