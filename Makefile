@@ -8,7 +8,7 @@ clean:
 	cargo clean
 
 build-c:
-	docker build -t geal/archlinux-rust .
+	docker build -t bradrydzewski/base .
 
 run-c:
 	docker run -p 8080:8080 -d -P geal/archlinux-rust
