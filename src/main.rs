@@ -67,15 +67,17 @@ pub fn setup_connection_pool(cn_str: &str, pool_size: u32) -> PostgresPool {
 }
 
 fn main() {
-    println!("connecting to postgres");
-
     let conn_string:String = match env::var("DATABASE_URL") {
         Ok(val) => val,
         Err(_) => "postgres://dbuser:dbpass@localhost:5432/test".to_string()
     };
 
+    println!("connecting to postgres: {}", conn_string);
+
     let pool = setup_connection_pool(&conn_string, 6);
     let conn = pool.get().unwrap();
+
+    println!("connected to postgres");
 
     conn.execute("DROP TABLE IF EXISTS messages;", &[]).unwrap();    
     conn.execute("CREATE TABLE IF NOT EXISTS messages (id INT PRIMARY KEY);", &[]).unwrap();

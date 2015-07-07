@@ -14,7 +14,7 @@ run-c:
 	docker run -p 8080:8080 -d -P geal/archlinux-rust
 
 push:
-	git push github master
+	git push origin master
 
 deploy:
 	git push deis master
