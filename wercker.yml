@@ -1,9 +1,16 @@
 box: geal/archlinux-rust
 
+dev:
+  steps:
+    - script:
+        name: build
+        code: |
+          rustc -V
+          cargo -V
+          cargo build
+          cargo test
+
 build:
-    # Steps make up the actions in your pipeline
-    # Read more about steps on our dev center:
-    # http://devcenter.wercker.com/docs/steps/index.html
   steps:
     - script:
         name: build
@@ -15,6 +22,11 @@ build:
 
 deploy:
   steps:
-  - script:
-      name: yo
-      code: echo "sup!"
+    - internal/docker-push:
+        username: $DOCKER_USERNAME
+        password: $DOCKER_PASSWORD
+        tag: rustwebapp
+        ports: "8080"
+        cmd: cargo run
+        repository: jakescott/rustwebapp
+        registry: https://registry.hub.docker.com
