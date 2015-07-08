@@ -9,3 +9,22 @@ build:
         name: build
         code: |
           cargo test
+
+deploy:
+  # This will be used, if no deploy target is found.
+  steps:
+  - script:
+      name: deploy
+      code: echo default deploy
+
+  # This will be used, if the deploy target "stable" is used.
+  stable:
+  - script:
+      name: deploy
+      code: echo stable deploy
+
+  # This will be used, if the deploy target "beta" is used.
+  beta:
+  - script:
+      name: deploy
+      code: echo beta deploy
