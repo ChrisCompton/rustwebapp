@@ -105,7 +105,3 @@ fn main() {
 pub fn test_it_works() {
     assert!(true == true);
 }
-
-fn main() {
-    println!("Working!................");
-}
