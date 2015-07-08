@@ -1,5 +1,0 @@
-image: adreeve/drone-rust
-
-script:
-    - cargo build
-    - cargo test
