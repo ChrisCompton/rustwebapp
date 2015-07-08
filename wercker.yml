@@ -8,6 +8,9 @@ build:
     - script:
         name: build
         code: |
+          rustc -V
+          cargo -V
+          cargo build --verbose
           cargo test
 
 deploy:
