@@ -1,20 +1,22 @@
-run:
-	cargo run
+all: build
 
 build:
-	cargo build
+	docker build --tag="jakescott/rustwebapp" .
 
-clean:
-	cargo clean
+#create: 
+#	docker run --name="rustwebapp" -p 8080:8080 -d -P jakescott/rustwebapp
 
-build-c:
-	docker build -t bradrydzewski/base .
+create: 
+	docker run --rm --name="rustwebapp" jakescott/rustwebapp
 
-run-c:
-	docker run -p 8080:8080 -d -P geal/archlinux-rust
 
-push:
-	git push origin master
 
-deploy:
-	git push deis master
+
+stop:
+	docker stop rustwebapp
+
+start:
+	docker start rustwebapp
+
+remove:
+	docker rm rustwebapp

@@ -1,6 +1,5 @@
-image: geal/archlinux-rust
+image: adreeve/drone-rust
 
 script:
-    - rustc -v
     - cargo build
     - cargo test
