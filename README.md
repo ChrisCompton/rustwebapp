@@ -9,7 +9,7 @@ Uses the following crates
 
 ## Install Postgresql
 
-I recommened using this Docker image https://github.com/sameersbn/docker-postgresql and using a Makefile like this.
+I recommend using this Docker image https://github.com/sameersbn/docker-postgresql and using a Makefile like this.
 
 ````make
 all: build
