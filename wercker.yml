@@ -54,14 +54,8 @@ deploy:
         name: copy build output
         code: |
             mkdir -p /app
-            echo "output dir:" $WERCKER_OUTPUT_DIR
-            echo "-- /pipeline:"
-            ls /pipeline
-            echo "-- /pipeline/source:"
+            echo "/pipeline/source:"
             ls /pipeline/source
-            echo "-- /pipeline/output:"
-            ls /pipeline/output
-            cp -R /pipeline/output/* /app/
             cp -R /pipeline/source/* /app/
     - internal/docker-push:
         username: $DOCKER_USERNAME
