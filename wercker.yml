@@ -39,9 +39,10 @@ build:
           cargo -V
           cargo build
           cargo test --features integration_tests
-          cp -R ./target/debug/* $WERCKER_OUTPUT_DIR/
-          echo $WERCKER_OUTPUT_DIR
-          ls $WERCKER_OUTPUT_DIR
+          mkdir -p $WERCKER_OUTPUT_DIR/build
+          mkdir -p $WERCKER_OUTPUT_DIR/repo
+          cp -R $WERCKER_SOURCE_DIR $WERCKER_OUTPUT_DIR/repo
+          cp -R ./target/debug/* $WERCKER_OUTPUT_DIR/build
 
 # This is the build config for Deploying to Deis
 deploy:
@@ -58,6 +59,7 @@ deploy:
           ssh-keyscan -p 2222 -H deis.superlogical.io >> ~/.ssh/known_hosts
           ssh-keyscan -p 2222 -t ecdsa -H deis.superlogical.io >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+          cd $WERCKER_SOURCE_DIR/repo
           git remote add deis ssh://git@deis.superlogical.io:2222/actual-checkers.git || true
           git push deis master
     - script:
@@ -67,9 +69,7 @@ deploy:
         name: copy build output
         code: |
             mkdir -p /app
-            echo "/pipeline/source:"
-            ls /pipeline/source
-            cp -R /pipeline/source/* /app/
+            cp -R $WERCKER_SOURCE_DIR/build/* /app/
     - internal/docker-push:
         username: $DOCKER_USERNAME
         password: $DOCKER_PASSWORD
