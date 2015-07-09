@@ -1,5 +1,7 @@
 # rustwebapp
 
+[![wercker status](https://app.wercker.com/status/35093a002c9d8b82da010d7c0b3c772d/m "wercker status")](https://app.wercker.com/project/bykey/35093a002c9d8b82da010d7c0b3c772d)
+
 Uses the following crates
 - https://github.com/iron/iron
 - https://github.com/iron/persistent
