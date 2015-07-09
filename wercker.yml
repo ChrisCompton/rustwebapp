@@ -9,7 +9,7 @@ dev:
       env:
         DB_USER: dbuser
         DB_PASS: dbpass
-        DB_NAME: test        
+        DB_NAME: test
   steps:
     - script:
         name: build
@@ -39,6 +39,9 @@ build:
           cargo -V
           cargo build
           cargo test --features integration_tests
+          cp -R ./target/debug/* $WERCKER_OUTPUT_DIR/
+          echo $WERCKER_OUTPUT_DIR
+          ls $WERCKER_OUTPUT_DIR
 
 # This is the build config for Deploying to Deis
 deploy:
@@ -57,3 +60,13 @@ deploy:
           chmod 600 ~/.ssh/known_hosts
           git remote add deis ssh://git@deis.superlogical.io:2222/actual-checkers.git || true
           git push deis master
+    - script:
+        name: docker env check
+        code: echo $DOCKER_USERNAME
+    - internal/docker-push:
+        username: $DOCKER_USERNAME
+        password: $DOCKER_PASSWORD
+        cmd: /pipeline/output/rustwebapp
+        tag: $WERCKER_GIT_COMMIT
+        ports: "8080"
+        repository: adreeve/rustwebapp
