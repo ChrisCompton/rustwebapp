@@ -50,10 +50,23 @@ deploy:
     - script:
         name: docker env check
         code: echo $DOCKER_USERNAME
+    - script:
+        name: copy build output
+        code: |
+            mkdir -p /app
+            echo "output dir:" $WERCKER_OUTPUT_DIR
+            echo "-- /pipeline:"
+            ls /pipeline
+            echo "-- /pipeline/source:"
+            ls /pipeline/source
+            echo "-- /pipeline/output:"
+            ls /pipeline/output
+            cp -R /pipeline/output/* /app/
+            cp -R /pipeline/source/* /app/
     - internal/docker-push:
         username: $DOCKER_USERNAME
         password: $DOCKER_PASSWORD
-        cmd: /pipeline/output/rustwebapp
+        cmd: /app/rustwebapp
         tag: $WERCKER_GIT_COMMIT
         ports: "8080"
         repository: adreeve/rustwebapp
