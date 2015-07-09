@@ -1,3 +1,5 @@
+#![cfg_attr(test, allow(dead_code))]
+
 extern crate iron;
 extern crate persistent;
 extern crate router;
@@ -26,7 +28,6 @@ impl Key for HitCounter { type Value = usize; }
 
 pub struct AppDb;
 impl Key for AppDb { type Value = PostgresPool; }
-
 
 fn index(_: &mut Request) -> IronResult<Response> {
     let powered_by:String = match env::var("POWERED_BY") {
@@ -60,7 +61,7 @@ fn database(req: &mut Request) -> IronResult<Response> {
     Ok(Response::with((status::Ok, format!("Db: {}", "ok"))))
 }
 
-pub fn setup_connection_pool(cn_str: &str, pool_size: u32) -> PostgresPool {
+fn setup_connection_pool(cn_str: &str, pool_size: u32) -> PostgresPool {
     let manager = ::r2d2_postgres::PostgresConnectionManager::new(cn_str, ::postgres::SslMode::None).unwrap();
     let config = ::r2d2::Config::builder().pool_size(pool_size).build();
     ::r2d2::Pool::new(config, manager).unwrap()
@@ -99,25 +100,4 @@ fn main() {
     let host = SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8080);
     println!("listening on http://{}", host);
     Iron::new(middleware).http(host).unwrap();
-}
-
-#[test]
-pub fn test_it_works() {
-    assert!(true == true);
-}
-
-#[test]
-#[cfg(feature = "integration_tests")]
-pub fn test_db() {
-    let conn_string:String = match env::var("DATABASE_URL") {
-        Ok(val) => val,
-        Err(_) => "postgres://dbuser:dbpass@localhost:5432/test".to_string()
-    };
-
-    println!("connecting to postgres: {}", conn_string);
-    let pool = setup_connection_pool(&conn_string, 6);
-    let conn = pool.get().unwrap();
-
-    println!("connected to postgres");
-    conn.execute("SELECT 1;", &[]).unwrap();
 }

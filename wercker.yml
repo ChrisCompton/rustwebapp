@@ -17,7 +17,7 @@ dev:
           export DATABASE_URL=postgres://dbuser:dbpass@postgresql:5432/test
           rustc -V
           cargo -V
-          cargo build --verbose
+          cargo build
           cargo test --features integration_tests
 
 # This is the build config for Wercker
