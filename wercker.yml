@@ -28,24 +28,19 @@ build:
           cargo build --verbose
           cargo test --features integration_tests
 
-# deploy:
-#   steps:
-#     - internal/docker-push:
-#         username: $DOCKER_USERNAME
-#         password: $DOCKER_PASSWORD
-#         ports: "8080"
-#         cmd: cargo run
-#         repository: jakescott/rustwebapp
-#         registry: https://registry.hub.docker.com
+
 
 deploy:
+  box: adreeve/rust-nightly-deploy:2015-07-02
   steps:
     - script:
         name: push to deis
-        code: |
-          echo "works"
-          sudo apt-get install git
-# curl -sSL http://deis.io/deis-cli/install.sh | sh
-# ./deis --version
-# ./deis keys:add 
-# ./deis auth:login http://deis.superlogical.io --username=$DEIS_USERNAME --password=$DEIS_PASSWORD
+        code : |
+          mkdir -p ~/.ssh
+          echo -e "$DEIS_PRIVATE" > ~/.ssh/id_rsa
+          chmod 700 ~/.ssh
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 2222 -H deis.superlogical.io >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          git remote add deis ssh://git@deis.superlogical.io:2222/actual-checkers.git || true
+          git push deis master
