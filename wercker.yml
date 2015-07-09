@@ -46,18 +46,6 @@ deploy:
   box: adreeve/rust-nightly-deploy:2015-07-02
   steps:
     - script:
-        name: env
-        code: echo $QUAY_USERNAME
-    - internal/docker-scratch-push:
-        username: $QUAY_USERNAME
-        password: $QUAY_PASSWORD
-        cmd: ./app
-        tag: $WERCKER_GIT_COMMIT
-        ports: "5000"
-        repository: quay.io/superlogical/rustwebapp
-        registry: https://quay.io
-
-    - script:
         name: push to deis
         code : |
           mkdir -p ~/.ssh
