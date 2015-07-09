@@ -33,7 +33,7 @@ fn index(_: &mut Request) -> IronResult<Response> {
         Ok(val) => val,
         Err(_) => "Iron".to_string()
     };
-    let message = format!("Powered by: {}", powered_by);
+    let message = format!("Powered by: {}, pretty cool aye", powered_by);
     Ok(Response::with((status::Ok, message)))
 }
 
