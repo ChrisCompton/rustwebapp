@@ -46,20 +46,7 @@ build:
 # This is the build config for Deploying to Deis
 deploy:
   # This Docker image has git installed, and inherits from the base box above
-  box: adreeve/rust-nightly-deploy:2015-07-02
   steps:
-    - script:
-        name: push to deis
-        code : |
-          mkdir -p ~/.ssh
-          echo -e "$DEIS_PRIVATE" > ~/.ssh/id_rsa
-          chmod 700 ~/.ssh
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p 2222 -H deis.superlogical.io >> ~/.ssh/known_hosts
-          ssh-keyscan -p 2222 -t ecdsa -H deis.superlogical.io >> ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-          git remote add deis ssh://git@deis.superlogical.io:2222/actual-checkers.git || true
-          git push deis master
     - script:
         name: docker env check
         code: echo $DOCKER_USERNAME
