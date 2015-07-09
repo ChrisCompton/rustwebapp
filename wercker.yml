@@ -1,4 +1,4 @@
-box: geal/archlinux-rust
+box: adreeve/rust-nightly:2015-07-02
 
 dev:
   steps:
@@ -28,12 +28,24 @@ build:
           cargo build --verbose
           cargo test --features integration_tests
 
+# deploy:
+#   steps:
+#     - internal/docker-push:
+#         username: $DOCKER_USERNAME
+#         password: $DOCKER_PASSWORD
+#         ports: "8080"
+#         cmd: cargo run
+#         repository: jakescott/rustwebapp
+#         registry: https://registry.hub.docker.com
+
 deploy:
   steps:
-    - internal/docker-push:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
-        ports: "8080"
-        cmd: cargo run
-        repository: jakescott/rustwebapp
-        registry: https://registry.hub.docker.com
+    - script:
+        name: push to deis
+        code: |
+          echo "works"
+          sudo apt-get install git
+# curl -sSL http://deis.io/deis-cli/install.sh | sh
+# ./deis --version
+# ./deis keys:add 
+# ./deis auth:login http://deis.superlogical.io --username=$DEIS_USERNAME --password=$DEIS_PASSWORD
