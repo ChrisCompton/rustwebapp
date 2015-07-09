@@ -1,15 +1,26 @@
+# This is the same image that is used in Deis, see Dockerfile
 box: adreeve/rust-nightly:2015-07-02
 
+# This is for doing local builds before pushing to github!
 dev:
+  services:
+    - id: sameersbn/postgresql
+      tag: 9.4-1
+      env:
+        DB_USER: dbuser
+        DB_PASS: dbpass
+        DB_NAME: test
   steps:
     - script:
         name: build
         code: |
+          export DATABASE_URL=postgres://dbuser:dbpass@postgresql:5432/test
           rustc -V
           cargo -V
-          cargo build
-          cargo test
+          cargo build --verbose
+          cargo test --features integration_tests
 
+# This is the build config for Wercker
 build:
   services:
     - id: sameersbn/postgresql
@@ -28,9 +39,9 @@ build:
           cargo build --verbose
           cargo test --features integration_tests
 
-
-
+# This is the build config for Deploying to Deis
 deploy:
+  # This Docker image has git installed, and inherits from the base box above
   box: adreeve/rust-nightly-deploy:2015-07-02
   steps:
     - script:
