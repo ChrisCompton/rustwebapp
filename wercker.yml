@@ -41,7 +41,8 @@ build:
           cargo test --features integration_tests
           mkdir -p $WERCKER_OUTPUT_DIR/build
           mkdir -p $WERCKER_OUTPUT_DIR/repo
-          cp -R $WERCKER_SOURCE_DIR $WERCKER_OUTPUT_DIR/repo
+          cp -R $WERCKER_SOURCE_DIR/* $WERCKER_OUTPUT_DIR/repo
+          cp -R $WERCKER_SOURCE_DIR/.git $WERCKER_OUTPUT_DIR/repo/.git
           cp -R ./target/debug/* $WERCKER_OUTPUT_DIR/build
 
 # This is the build config for Deploying to Deis
