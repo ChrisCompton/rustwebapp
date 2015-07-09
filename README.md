@@ -7,7 +7,7 @@ Uses the following crates
 - https://github.com/sfackler/r2d2-postgres
 - https://github.com/sfackler/rust-postgres
 
-## Install Postgresql
+### Postgresql Docker Commands
 
 I recommend using this Docker image https://github.com/sameersbn/docker-postgresql and using a Makefile like this.
 
@@ -40,6 +40,20 @@ connect:
 	docker exec -it postgresql sudo -u postgres psql
 
 .PHONY: start
+````
 
+### Rustwebapp Docker Commands
 
+````make
+build:
+	docker build -t=rustwebapp .
+
+run:
+	docker run --name=rustwebapp -d -p 8080:8080 -e DATABASE_URL=postgres://dbuser:dbpass@dbname:5432/test --link=postgresql:dbname rustwebapp
+
+stop:
+	docker stop rustwebapp
+
+start:
+	docker start rustwebapp
 ````
