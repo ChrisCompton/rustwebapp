@@ -36,7 +36,6 @@ impl Key for HitCounter { type Value = usize; }
 pub struct AppDb;
 impl Key for AppDb { type Value = PostgresPool; }
 
-#[derive(RustcDecodable, RustcEncodable)]
 struct Team {
     name: String,
     points: u16
