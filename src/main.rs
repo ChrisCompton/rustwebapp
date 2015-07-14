@@ -6,6 +6,8 @@ extern crate router;
 extern crate postgres;
 extern crate r2d2;
 extern crate r2d2_postgres;
+extern crate handlebars_iron;
+extern crate rustc_serialize;
 
 use std::env;
 use std::net::*;
@@ -19,6 +21,10 @@ use persistent::{Write,Read};
 use r2d2::{Pool, PooledConnection};
 use r2d2_postgres::{PostgresConnectionManager};
 
+use handlebars_iron::{Template, HandlebarsEngine};
+use rustc_serialize::json::{ToJson, Json};
+use std::collections::BTreeMap;
+
 pub type PostgresPool = Pool<PostgresConnectionManager>;
 pub type PostgresPooledConnection = PooledConnection<PostgresConnectionManager>;
 
@@ -29,13 +35,45 @@ impl Key for HitCounter { type Value = usize; }
 pub struct AppDb;
 impl Key for AppDb { type Value = PostgresPool; }
 
-fn index(_: &mut Request) -> IronResult<Response> {
+struct Team {
+    name: String,
+    points: u16
+}
+
+impl ToJson for Team {
+    fn to_json(&self) -> Json {
+        let mut m: BTreeMap<String, Json> = BTreeMap::new();
+        m.insert("name".to_string(), self.name.to_json());
+        m.insert("points".to_string(), self.points.to_json());
+        m.to_json()
+    }
+}
+
+fn environment(_: &mut Request) -> IronResult<Response> {
     let powered_by:String = match env::var("POWERED_BY") {
         Ok(val) => val,
         Err(_) => "Iron".to_string()
-    };
+    };    
     let message = format!("Powered by: {}, pretty cool aye", powered_by);
     Ok(Response::with((status::Ok, message)))
+}
+
+fn handlebars(_: &mut Request) -> IronResult<Response> {
+    fn make_data() -> BTreeMap<String, Json> {
+        let mut data = BTreeMap::new();
+        let teams = vec![
+            Team { name: "Jake Scott".to_string(), points: 11u16 },
+            Team { name: "Adam Reeve".to_string(), points: 19u16 },
+            Team { name: "Richard Downer".to_string(), points: 22u16 }
+        ];
+        data.insert("teams".to_string(), teams.to_json());
+        data
+    }    
+    let data = make_data();    
+    let mut response = Response::new();
+    response.set_mut(Template::new("index", data));
+    response.set_mut(status::Ok);
+    Ok(response)
 }
 
 fn posts(req: &mut Request) -> IronResult<Response> {
@@ -88,14 +126,16 @@ fn main() {
     conn.execute("INSERT INTO messages VALUES (3);", &[]).unwrap();
     
     let mut router = Router::new();
-    router.get("/", index);
+    router.get("/", environment);
+    router.get("/handlebars", handlebars);
     router.get("/posts/:post_id", posts);
     router.get("/hits", hits);
     router.get("/database", database);
 
     let mut middleware = Chain::new(router);
     middleware.link(Write::<HitCounter>::both(0));
-    middleware.link(Read::<AppDb>::both(pool));    
+    middleware.link(Read::<AppDb>::both(pool));
+    middleware.link_after(HandlebarsEngine::new("./src/templates", ".hbs"));
 
     let host = SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 8080);
     println!("listening on http://{}", host);

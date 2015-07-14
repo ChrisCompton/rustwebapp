@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Iron Handlebars!</title>
+</head>
+<body>
+    <h1>Iron Handlebars!</h1>
+    <ul>
+    {{#each teams}}
+        <li class="{{#if @first}}champion{{/if}}">
+            {{@index}}. <b>{{name}}</b>: {{points}}
+        </li>
+    {{/each}}
+    </ul>
+</body>
+</html>
