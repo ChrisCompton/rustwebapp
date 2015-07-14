@@ -22,6 +22,7 @@ use r2d2::{Pool, PooledConnection};
 use r2d2_postgres::{PostgresConnectionManager};
 
 use handlebars_iron::{Template, HandlebarsEngine};
+use rustc_serialize::json;
 use rustc_serialize::json::{ToJson, Json};
 use std::collections::BTreeMap;
 
@@ -35,6 +36,7 @@ impl Key for HitCounter { type Value = usize; }
 pub struct AppDb;
 impl Key for AppDb { type Value = PostgresPool; }
 
+#[derive(RustcDecodable, RustcEncodable)]
 struct Team {
     name: String,
     points: u16
@@ -49,6 +51,23 @@ impl ToJson for Team {
     }
 }
 
+fn setup_connection_pool(cn_str: &str, pool_size: u32) -> PostgresPool {
+    let manager = ::r2d2_postgres::PostgresConnectionManager::new(cn_str, ::postgres::SslMode::None).unwrap();
+    let config = ::r2d2::Config::builder().pool_size(pool_size).build();
+    ::r2d2::Pool::new(config, manager).unwrap()
+}
+
+fn make_data() -> BTreeMap<String, Json> {
+    let mut data = BTreeMap::new();
+    let teams = vec![
+        Team { name: "Jake Scott".to_string(), points: 11u16 },
+        Team { name: "Adam Reeve".to_string(), points: 19u16 },
+        Team { name: "Richard Downer".to_string(), points: 22u16 }
+    ];
+    data.insert("teams".to_string(), teams.to_json());
+    data
+}    
+
 fn environment(_: &mut Request) -> IronResult<Response> {
     let powered_by:String = match env::var("POWERED_BY") {
         Ok(val) => val,
@@ -59,20 +78,19 @@ fn environment(_: &mut Request) -> IronResult<Response> {
 }
 
 fn handlebars(_: &mut Request) -> IronResult<Response> {
-    fn make_data() -> BTreeMap<String, Json> {
-        let mut data = BTreeMap::new();
-        let teams = vec![
-            Team { name: "Jake Scott".to_string(), points: 11u16 },
-            Team { name: "Adam Reeve".to_string(), points: 19u16 },
-            Team { name: "Richard Downer".to_string(), points: 22u16 }
-        ];
-        data.insert("teams".to_string(), teams.to_json());
-        data
-    }    
-    let data = make_data();    
+    let data = make_data();
     let mut response = Response::new();
     response.set_mut(Template::new("index", data));
     response.set_mut(status::Ok);
+    Ok(response)
+}
+
+fn json(_: &mut Request) -> IronResult<Response> {
+    let data = make_data();
+    let encoded = json::encode(&data).unwrap();
+    let mut response = Response::new();
+    response.set_mut(status::Ok);
+    response.set_mut(encoded);
     Ok(response)
 }
 
@@ -99,12 +117,6 @@ fn database(req: &mut Request) -> IronResult<Response> {
     Ok(Response::with((status::Ok, format!("Db: {}", "ok"))))
 }
 
-fn setup_connection_pool(cn_str: &str, pool_size: u32) -> PostgresPool {
-    let manager = ::r2d2_postgres::PostgresConnectionManager::new(cn_str, ::postgres::SslMode::None).unwrap();
-    let config = ::r2d2::Config::builder().pool_size(pool_size).build();
-    ::r2d2::Pool::new(config, manager).unwrap()
-}
-
 fn main() {
     let conn_string:String = match env::var("DATABASE_URL") {
         Ok(val) => val,
@@ -127,6 +139,7 @@ fn main() {
     
     let mut router = Router::new();
     router.get("/", environment);
+    router.get("/json", json);
     router.get("/handlebars", handlebars);
     router.get("/posts/:post_id", posts);
     router.get("/hits", hits);
