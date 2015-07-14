@@ -9,22 +9,28 @@ extern crate r2d2_postgres;
 extern crate handlebars_iron;
 extern crate rustc_serialize;
 
+/// Standard lib crates
 use std::env;
 use std::net::*;
+use std::collections::BTreeMap;
 
+// Json crates
+use rustc_serialize::json;
+use rustc_serialize::json::{ToJson, Json};
+
+// Iron crates
 use iron::prelude::*;
 use iron::status;
 use iron::typemap::Key;
 use router::Router;
 use persistent::{Write,Read};
+use handlebars_iron::{Template, HandlebarsEngine};
 
+// Postgres crates
 use r2d2::{Pool, PooledConnection};
 use r2d2_postgres::{PostgresConnectionManager};
 
-use handlebars_iron::{Template, HandlebarsEngine};
-use rustc_serialize::json;
-use rustc_serialize::json::{ToJson, Json};
-use std::collections::BTreeMap;
+// Types
 
 pub type PostgresPool = Pool<PostgresConnectionManager>;
 pub type PostgresPooledConnection = PooledConnection<PostgresConnectionManager>;
@@ -50,6 +56,8 @@ impl ToJson for Team {
     }
 }
 
+// Helper methods
+
 fn setup_connection_pool(cn_str: &str, pool_size: u32) -> PostgresPool {
     let manager = ::r2d2_postgres::PostgresConnectionManager::new(cn_str, ::postgres::SslMode::None).unwrap();
     let config = ::r2d2::Config::builder().pool_size(pool_size).build();
@@ -65,7 +73,9 @@ fn make_data() -> BTreeMap<String, Json> {
     ];
     data.insert("teams".to_string(), teams.to_json());
     data
-}    
+}
+
+// Routes
 
 fn environment(_: &mut Request) -> IronResult<Response> {
     let powered_by:String = match env::var("POWERED_BY") {
@@ -115,6 +125,8 @@ fn database(req: &mut Request) -> IronResult<Response> {
     }
     Ok(Response::with((status::Ok, format!("Db: {}", "ok"))))
 }
+
+// Main
 
 fn main() {
     let conn_string:String = match env::var("DATABASE_URL") {
