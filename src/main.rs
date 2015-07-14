@@ -57,14 +57,21 @@ impl ToJson for Team {
 }
 
 // Helper methods
-
 fn setup_connection_pool(cn_str: &str, pool_size: u32) -> PostgresPool {
     let manager = ::r2d2_postgres::PostgresConnectionManager::new(cn_str, ::postgres::SslMode::None).unwrap();
     let config = ::r2d2::Config::builder().pool_size(pool_size).build();
     ::r2d2::Pool::new(config, manager).unwrap()
 }
 
-fn make_data() -> BTreeMap<String, Json> {
+fn insert_dummy_data(conn :&PostgresPooledConnection) {
+    conn.execute("DROP TABLE IF EXISTS messages;", &[]).unwrap();    
+    conn.execute("CREATE TABLE IF NOT EXISTS messages (id INT PRIMARY KEY);", &[]).unwrap();
+    conn.execute("INSERT INTO messages VALUES (1);", &[]).unwrap();
+    conn.execute("INSERT INTO messages VALUES (2);", &[]).unwrap();
+    conn.execute("INSERT INTO messages VALUES (3);", &[]).unwrap();    
+}
+
+fn get_team_dummy_data() -> BTreeMap<String, Json> {
     let mut data = BTreeMap::new();
     let teams = vec![
         Team { name: "Jake Scott".to_string(), points: 11u16 },
@@ -76,7 +83,6 @@ fn make_data() -> BTreeMap<String, Json> {
 }
 
 // Routes
-
 fn environment(_: &mut Request) -> IronResult<Response> {
     let powered_by:String = match env::var("POWERED_BY") {
         Ok(val) => val,
@@ -87,7 +93,7 @@ fn environment(_: &mut Request) -> IronResult<Response> {
 }
 
 fn handlebars(_: &mut Request) -> IronResult<Response> {
-    let data = make_data();
+    let data = get_team_dummy_data();
     let mut response = Response::new();
     response.set_mut(Template::new("index", data));
     response.set_mut(status::Ok);
@@ -95,7 +101,7 @@ fn handlebars(_: &mut Request) -> IronResult<Response> {
 }
 
 fn json(_: &mut Request) -> IronResult<Response> {
-    let data = make_data();
+    let data = get_team_dummy_data();
     let encoded = json::encode(&data).unwrap();
     let mut response = Response::new();
     response.set_mut(status::Ok);
@@ -127,7 +133,6 @@ fn database(req: &mut Request) -> IronResult<Response> {
 }
 
 // Main
-
 fn main() {
     let conn_string:String = match env::var("DATABASE_URL") {
         Ok(val) => val,
@@ -135,18 +140,11 @@ fn main() {
     };
 
     println!("connecting to postgres: {}", conn_string);
-
     let pool = setup_connection_pool(&conn_string, 6);
     let conn = pool.get().unwrap();
 
-    println!("connected to postgres");
-
-    conn.execute("DROP TABLE IF EXISTS messages;", &[]).unwrap();    
-    conn.execute("CREATE TABLE IF NOT EXISTS messages (id INT PRIMARY KEY);", &[]).unwrap();
-    
-    conn.execute("INSERT INTO messages VALUES (1);", &[]).unwrap();
-    conn.execute("INSERT INTO messages VALUES (2);", &[]).unwrap();
-    conn.execute("INSERT INTO messages VALUES (3);", &[]).unwrap();
+    println!("inserting dummy data.");
+    insert_dummy_data(&conn);    
     
     let mut router = Router::new();
     router.get("/", environment);
