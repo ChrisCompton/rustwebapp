@@ -3,15 +3,20 @@
 extern crate iron;
 extern crate persistent;
 extern crate router;
+extern crate mount;
+extern crate staticfile;
+
 extern crate postgres;
 extern crate r2d2;
 extern crate r2d2_postgres;
+
 extern crate handlebars_iron;
 extern crate rustc_serialize;
 
 /// Standard lib crates
 use std::env;
 use std::net::*;
+use std::path::Path;
 use std::collections::BTreeMap;
 
 // Json crates
@@ -23,6 +28,8 @@ use iron::prelude::*;
 use iron::status;
 use iron::typemap::Key;
 use router::Router;
+use mount::Mount;
+use staticfile::Static;
 use persistent::{Write,Read};
 use handlebars_iron::{Template, HandlebarsEngine};
 
@@ -144,7 +151,7 @@ fn main() {
     let conn = pool.get().unwrap();
 
     println!("inserting dummy data.");
-    insert_dummy_data(&conn);    
+    insert_dummy_data(&conn);
     
     let mut router = Router::new();
     router.get("/", environment);
@@ -154,7 +161,11 @@ fn main() {
     router.get("/hits", hits);
     router.get("/database", database);
 
-    let mut middleware = Chain::new(router);
+    let mut mount = Mount::new();
+    mount.mount("/", router);
+    mount.mount("/static", Static::new(Path::new("./src/static/")));
+
+    let mut middleware = Chain::new(mount);
     middleware.link(Write::<HitCounter>::both(0));
     middleware.link(Read::<AppDb>::both(pool));
     middleware.link_after(HandlebarsEngine::new("./src/templates", ".hbs"));
