@@ -2,10 +2,14 @@
 
 [![wercker status](https://app.wercker.com/status/35093a002c9d8b82da010d7c0b3c772d/m "wercker status")](https://app.wercker.com/project/bykey/35093a002c9d8b82da010d7c0b3c772d)
 
-Uses the following crates
+Crates used:
 - https://github.com/iron/iron
 - https://github.com/iron/persistent
 - https://github.com/iron/router
+- https://github.com/iron/mount
+- https://github.com/iron/staticfile
+- https://github.com/sunng87/handlebars-iron
+- https://github.com/rust-lang/rustc-serialize
 - https://github.com/sfackler/r2d2-postgres
 - https://github.com/sfackler/rust-postgres
 
